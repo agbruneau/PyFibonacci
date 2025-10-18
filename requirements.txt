@@ -1,7 +1,6 @@
 # Dépendances pour le Calculateur Fibonacci Python
 
 # Dépendances de base
-asyncio-mqtt>=0.13.0  # Pour la gestion asynchrone avancée si nécessaire
 typing-extensions>=4.0.0  # Support étendu des types
 
 # Tests et qualité de code  
