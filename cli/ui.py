@@ -12,14 +12,7 @@ from dataclasses import dataclass
 from threading import Thread, Event
 import multiprocessing as mp
 
-
-@dataclass
-class CalculationResult:
-    """Résultat d'un calcul avec métadonnées."""
-    name: str
-    result: Optional[int]
-    duration: float
-    error: Optional[str]
+from fibonacci.utils import CalculationResult
 
 
 def format_duration(seconds: float) -> str:

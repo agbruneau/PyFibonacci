@@ -159,27 +159,23 @@ class MatrixExponentiation(CoreCalculator):
         loop = asyncio.get_event_loop()
         
         with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
-            # Lancement des 8 multiplications en parallèle
+            # Lancement des 4 additions en parallèle
             tasks = [
-                loop.run_in_executor(executor, self._multiply, m1.a, m2.a),
-                loop.run_in_executor(executor, self._multiply, m1.b, m2.c),
-                loop.run_in_executor(executor, self._multiply, m1.a, m2.b),
-                loop.run_in_executor(executor, self._multiply, m1.b, m2.d),
-                loop.run_in_executor(executor, self._multiply, m1.c, m2.a),
-                loop.run_in_executor(executor, self._multiply, m1.d, m2.c),
-                loop.run_in_executor(executor, self._multiply, m1.c, m2.b),
-                loop.run_in_executor(executor, self._multiply, m1.d, m2.d),
+                loop.run_in_executor(executor, self._multiply_add, m1.a, m2.a, m1.b, m2.c),
+                loop.run_in_executor(executor, self._multiply_add, m1.a, m2.b, m1.b, m2.d),
+                loop.run_in_executor(executor, self._multiply_add, m1.c, m2.a, m1.d, m2.c),
+                loop.run_in_executor(executor, self._multiply_add, m1.c, m2.b, m1.d, m2.d),
             ]
             
             # Attente des résultats
-            products = await asyncio.gather(*tasks)
+            results = await asyncio.gather(*tasks)
             
-            # Assemblage des résultats avec les additions
+            # Assemblage des résultats
             return Matrix2x2(
-                a=products[0] + products[1],  # m1.a*m2.a + m1.b*m2.c
-                b=products[2] + products[3],  # m1.a*m2.b + m1.b*m2.d
-                c=products[4] + products[5],  # m1.c*m2.a + m1.d*m2.c
-                d=products[6] + products[7]   # m1.c*m2.b + m1.d*m2.d
+                a=results[0],
+                b=results[1],
+                c=results[2],
+                d=results[3]
             )
     
     async def _square_symmetric_matrix(self, matrix: Matrix2x2, 
@@ -240,3 +236,8 @@ class MatrixExponentiation(CoreCalculator):
     def _multiply(x: int, y: int) -> int:
         """Fonction de multiplication statique pour l'exécution parallèle."""
         return x * y
+
+    @staticmethod
+    def _multiply_add(a: int, b: int, c: int, d: int) -> int:
+        """Fonction pour calculer (a*b + c*d) en parallèle."""
+        return a * b + c * d

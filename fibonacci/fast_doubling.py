@@ -66,7 +66,7 @@ class FastDoubling(CoreCalculator):
         work_done = 0
         
         # Itération sur les bits de n (MSB vers LSB)
-        for i, bit in enumerate(bits[1:], 1):  # Skip le premier bit (toujours 1)
+        for i, bit in enumerate(bits):  # Itère sur tous les bits
             # Vérification d'annulation (pour usage futur avec asyncio.Task)
             await asyncio.sleep(0)  # Yield pour permettre l'annulation
             
