@@ -1,8 +1,10 @@
 import argparse
+import sys
 import time
 from fibonacci import fast_doubling, matrix_exponentiation
 
 def main():
+    sys.set_int_max_str_digits(0)
     parser = argparse.ArgumentParser(description='High-performance Fibonacci calculator.')
     parser.add_argument('-n', type=int, required=True, help="The index 'n' of the Fibonacci sequence to calculate.")
     parser.add_argument('-algo', type=str, choices=['fast', 'matrix'], required=True, help='Algorithm: fast or matrix.')
