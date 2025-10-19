@@ -3,6 +3,12 @@ from fibonacci import fast_doubling, matrix_exponentiation
 
 # Test cases for the Fast Doubling algorithm
 def test_fast_doubling():
+    """
+    Teste l'implémentation de l'algorithme de doublement rapide.
+
+    Vérifie que l'algorithme produit des résultats corrects pour un ensemble
+    de valeurs de n, y compris les cas de base.
+    """
     assert fast_doubling.fibonacci(0)[0] == 0
     assert fast_doubling.fibonacci(1)[0] == 1
     assert fast_doubling.fibonacci(2)[0] == 1
@@ -12,6 +18,12 @@ def test_fast_doubling():
 
 # Test cases for the Matrix Exponentiation algorithm
 def test_matrix_exponentiation():
+    """
+    Teste l'implémentation de l'algorithme d'exponentiation matricielle.
+
+    Vérifie que l'algorithme produit des résultats corrects pour un ensemble
+    de valeurs de n, y compris les cas de base.
+    """
     assert matrix_exponentiation.fibonacci(0) == 0
     assert matrix_exponentiation.fibonacci(1) == 1
     assert matrix_exponentiation.fibonacci(2) == 1

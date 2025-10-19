@@ -1,4 +1,16 @@
 def fibonacci(n):
+    """
+    Calcule F(n) en utilisant l'algorithme d'exponentiation matricielle.
+
+    Cette méthode est basée sur le fait que la matrice de transformation
+    [[1, 1], [1, 0]] élevée à la puissance n donne une matrice contenant F(n).
+
+    Args:
+        n (int): L'indice de la suite de Fibonacci à calculer.
+
+    Returns:
+        int: La valeur de F(n).
+    """
     if n == 0:
         return 0
 
@@ -19,8 +31,16 @@ def fibonacci(n):
     return result[0][1]
 
 def multiply_matrices(A, B):
-    # This function multiplies two 2x2 matrices
-    # and returns the result
+    """
+    Multiplie deux matrices 2x2.
+
+    Args:
+        A (list): La première matrice.
+        B (list): La deuxième matrice.
+
+    Returns:
+        list: Le produit des deux matrices.
+    """
     C = [[0, 0], [0, 0]]
 
     C[0][0] = A[0][0] * B[0][0] + A[0][1] * B[1][0]

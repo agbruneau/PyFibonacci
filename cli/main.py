@@ -8,6 +8,17 @@ from fibonacci import fast_doubling, matrix_exponentiation, karatsuba_doubling
 from .progress_bar import progress_bar
 
 def run_with_timeout(func, n, timeout):
+    """
+    Exécute une fonction avec un délai d'attente.
+
+    Args:
+        func (function): La fonction à exécuter.
+        n (int): L'argument à passer à la fonction.
+        timeout (int): Le délai d'attente en secondes.
+
+    Returns:
+        Le résultat de la fonction, ou None si le délai est dépassé.
+    """
     with ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(func, n)
         try:
@@ -16,6 +27,12 @@ def run_with_timeout(func, n, timeout):
             return None
 
 def main():
+    """
+    Point d'entrée principal de l'interface en ligne de commande.
+
+    Analyse les arguments, exécute les algorithmes de Fibonacci et affiche
+    une comparaison de leurs performances.
+    """
     sys.set_int_max_str_digits(0)
     parser = argparse.ArgumentParser(description='High-performance Fibonacci calculator.')
     parser.add_argument('-n', type=int, required=True, help="The index 'n' of the Fibonacci sequence to calculate.")
