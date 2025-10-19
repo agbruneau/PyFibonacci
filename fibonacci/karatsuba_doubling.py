@@ -1,4 +1,4 @@
-from .karatsuba import karatsuba
+from .multiplication import multiply
 
 def fibonacci(n):
     """
@@ -8,8 +8,8 @@ def fibonacci(n):
         return (0, 1)
     else:
         a, b = fibonacci(n // 2)
-        c = karatsuba(a, (2 * b - a))
-        d = karatsuba(a, a) + karatsuba(b, b)
+        c = multiply(a, (2 * b - a))
+        d = multiply(a, a) + multiply(b, b)
         if n % 2 == 0:
             return (c, d)
         else:

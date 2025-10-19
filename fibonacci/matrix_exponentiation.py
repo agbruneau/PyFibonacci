@@ -18,14 +18,16 @@ def fibonacci(n):
 
     return result[0][1]
 
+from .multiplication import multiply
+
 def multiply_matrices(A, B):
     # This function multiplies two 2x2 matrices
     # and returns the result
     C = [[0, 0], [0, 0]]
 
-    C[0][0] = A[0][0] * B[0][0] + A[0][1] * B[1][0]
-    C[0][1] = A[0][0] * B[0][1] + A[0][1] * B[1][1]
-    C[1][0] = A[1][0] * B[0][0] + A[1][1] * B[1][0]
-    C[1][1] = A[1][0] * B[0][1] + A[1][1] * B[1][1]
+    C[0][0] = multiply(A[0][0], B[0][0]) + multiply(A[0][1], B[1][0])
+    C[0][1] = multiply(A[0][0], B[0][1]) + multiply(A[0][1], B[1][1])
+    C[1][0] = multiply(A[1][0], B[0][0]) + multiply(A[1][1], B[1][0])
+    C[1][1] = multiply(A[1][0], B[0][1]) + multiply(A[1][1], B[1][1])
 
     return C
