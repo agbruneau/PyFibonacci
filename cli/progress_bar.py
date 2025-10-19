@@ -2,7 +2,14 @@ import sys
 
 def progress_bar(current, total):
     """
-    Displays a progress bar that updates dynamically.
+    Affiche une barre de progression dynamique dans la console.
+
+    Cette fonction est conçue pour être appelée dans une boucle afin de
+    montrer la progression d'une tâche.
+
+    Args:
+        current (int): L'itération actuelle.
+        total (int): Le nombre total d'itérations.
     """
     bar_length = 40
     percent = 100.0 * current / total

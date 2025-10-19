@@ -1,6 +1,16 @@
 def karatsuba(x, y):
     """
-    Multiplies two large integers using the Karatsuba algorithm.
+    Multiplie deux grands entiers en utilisant l'algorithme de Karatsuba.
+
+    Cet algorithme récursif est plus rapide que la multiplication standard
+    pour les grands nombres, avec une complexité de O(n^log2(3)).
+
+    Args:
+        x (int): Le premier entier.
+        y (int): Le deuxième entier.
+
+    Returns:
+        int: Le produit de x et y.
     """
     # Base case for recursion
     if x < 10 or y < 10:
