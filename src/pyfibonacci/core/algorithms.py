@@ -65,6 +65,8 @@ async def fib_matrix(context: CalculationContext, n: int) -> int:
         return (ae + bg, af + bh, ce + dg, cf + dh)
 
     async def matrix_power(A: Tuple[int, int, int, int], m: int) -> Tuple[int, int, int, int]:
+        if m == 0:
+            return (1, 0, 0, 1)
         if m == 1:
             return A
         if m % 2 == 0:
@@ -76,8 +78,6 @@ async def fib_matrix(context: CalculationContext, n: int) -> int:
             return await multiply_matrices(A, temp)
 
     F = (1, 1, 1, 0)
-    if n == 1:
-        return 1
 
     result_matrix = await matrix_power(F, n - 1)
     return result_matrix[0]
