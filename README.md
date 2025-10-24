@@ -1,5 +1,8 @@
 # PyFibonacci - Calculateur de Fibonacci Haute Performance en Python
 
+[![CI Pipeline](https://github.com/agbruneau/PyFibonacci/actions/workflows/ci.yml/badge.svg)](https://github.com/agbruneau/PyFibonacci/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/agbruneau/PyFibonacci/badge.svg?branch=main)](https://coveralls.io/github/agbruneau/PyFibonacci?branch=main)
+
 Ce projet est une migration idiomatique en Python 3.11+ d'une application Go de haute performance pour le calcul des nombres de Fibonacci. L'objectif est de préserver les optimisations et l'architecture de la source Go tout en adoptant les meilleures pratiques et bibliothèques de l'écosystème Python moderne.
 
 ## Features
