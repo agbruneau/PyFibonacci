@@ -22,16 +22,34 @@ ALGORITHM_REGISTRY: Dict[str, Callable[..., Awaitable[int] | int]] = {
 }
 
 async def _run_cpu_bound_task(func: Callable[..., Any], *args: Any) -> Any:
-    """
-    Exécute une fonction bloquante (CPU-bound) dans un exécuteur de thread
-    pour ne pas bloquer la boucle d'événements asyncio.
+    """Exécute une fonction bloquante (CPU-bound) dans un `ThreadPoolExecutor`
+    pour éviter de bloquer la boucle d'événements `asyncio`.
+
+    Args:
+        func: La fonction synchrone et potentiellement bloquante à exécuter.
+        *args: Les arguments à passer à `func`.
+
+    Returns:
+        Le résultat de l'appel de `func(*args)`.
     """
     loop = asyncio.get_running_loop()
     # Le 'None' en premier argument utilise le ThreadPoolExecutor par défaut.
     return await loop.run_in_executor(None, func, *args)
 
 async def _run_single_algorithm(context: CalculationContext, n: int, algo_name: str, timeout: float):
-    """Exécute un seul algorithme de Fibonacci avec un timeout."""
+    """Exécute un algorithme de Fibonacci spécifié et affiche le résultat.
+
+    La fonction gère l'appel (synchrone ou asynchrone) de l'algorithme,
+    applique un timeout à l'exécution et gère les erreurs potentielles
+    (TimeoutError, exceptions générales).
+
+    Args:
+        context: Le contexte de calcul à passer aux algorithmes asynchrones.
+        n: L'indice de la suite de Fibonacci à calculer.
+        algo_name: Le nom de l'algorithme à utiliser (doit être une clé
+                   dans `ALGORITHM_REGISTRY`).
+        timeout: Le temps maximum en secondes alloué pour l'exécution.
+    """
     algo_func = ALGORITHM_REGISTRY[algo_name]
     print(f"Calcul de F({n}) en utilisant l'algorithme '{algo_name}'...")
 
@@ -51,7 +69,16 @@ async def _run_single_algorithm(context: CalculationContext, n: int, algo_name: 
         print(f"ERREUR inattendue avec l'algorithme '{algo_name}': {e}", file=sys.stderr)
 
 async def _run_all_algorithms(context: CalculationContext, n: int, timeout: float):
-    """Exécute tous les algorithmes disponibles en parallèle en utilisant un TaskGroup."""
+    """Exécute tous les algorithmes de Fibonacci enregistrés en parallèle.
+
+    Utilise un `asyncio.TaskGroup` pour lancer et gérer l'exécution
+    concurrente de tous les algorithmes listés dans `ALGORITHM_REGISTRY`.
+
+    Args:
+        context: Le contexte de calcul à passer aux algorithmes.
+        n: L'indice de la suite de Fibonacci à calculer.
+        timeout: Le temps maximum en secondes alloué pour chaque algorithme.
+    """
     print(f"Calcul de F({n}) en utilisant tous les algorithmes en parallèle...")
 
     async def _task_wrapper(name: str, func: Callable) -> None:
@@ -76,9 +103,18 @@ async def _run_all_algorithms(context: CalculationContext, n: int, timeout: floa
 async def _run_single_algorithm_with_progress_shutdown(
     context: CalculationContext, n: int, algo_name: str, timeout: float
 ):
-    """
-    Wrapper pour exécuter un algorithme et s'assurer que le signal 'done'
-    est envoyé à la barre de progression à la fin du calcul.
+    """Exécute un algorithme et garantit la notification de fin à la barre
+    de progression.
+
+    Cet enrobeur (wrapper) s'assure que le message "done" est envoyé à la
+    `progress_queue` même si l'algorithme échoue ou est annulé,
+    permettant ainsi à la barre de progression de se terminer proprement.
+
+    Args:
+        context: Le contexte de calcul.
+        n: L'indice de la suite de Fibonacci.
+        algo_name: Le nom de l'algorithme à exécuter.
+        timeout: Le timeout pour l'exécution de l'algorithme.
     """
     try:
         await _run_single_algorithm(context, n, algo_name, timeout)
@@ -88,8 +124,15 @@ async def _run_single_algorithm_with_progress_shutdown(
 
 
 async def main_async():
-    """
-    Fonction principale asynchrone qui orchestre l'application.
+    """Orchestre l'exécution de l'application en mode asynchrone.
+
+    Cette fonction principale est responsable de :
+    1.  Analyser les arguments de la ligne de commande.
+    2.  Initialiser le `ProcessPoolExecutor` pour les calculs parallèles.
+    3.  Lancer le mode calibration si demandé.
+    4.  Créer le `CalculationContext` avec les paramètres appropriés.
+    5.  Gérer l'exécution du ou des algorithmes de Fibonacci sélectionnés.
+    6.  Mettre en place et coordonner la barre de progression si nécessaire.
     """
     args = parse_args()
 

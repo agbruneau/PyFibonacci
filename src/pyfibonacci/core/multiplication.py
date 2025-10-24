@@ -6,24 +6,40 @@ import asyncio
 from .context import CalculationContext
 
 def _parallel_multiply(a: int, b: int) -> int:
-    """
-    Fonction cible pour l'exécution parallèle.
-    Cette fonction doit être de haut niveau pour être "picklable".
-    """
-    return a * b
+    """Effectue une multiplication simple `a * b`.
 
-async def multiply(context: CalculationContext, a: int, b: int) -> int:
-    """
-    Multiplie deux grands entiers, en utilisant une stratégie parallèle si leur
-    taille dépasse un certain seuil.
+    Cette fonction est conçue pour être exécutée dans un processus séparé via
+    `ProcessPoolExecutor`. Pour cette raison, elle doit être une fonction de
+    premier niveau dans le module pour garantir qu'elle puisse être "picklée"
+    (sérialisée) par le module `multiprocessing`.
 
     Args:
-        context: Le contexte de calcul contenant le seuil et l'exécuteur de processus.
         a: Le premier entier.
         b: Le deuxième entier.
 
     Returns:
-        Le résultat de la multiplication.
+        Le produit de `a` et `b`.
+    """
+    return a * b
+
+async def multiply(context: CalculationContext, a: int, b: int) -> int:
+    """Multiplie deux entiers en choisissant une stratégie (standard ou parallèle)
+    basée sur leur taille.
+
+    Si la taille en bits de l'un des opérandes dépasse un seuil défini dans le
+    `CalculationContext`, la multiplication est déléguée à un `ProcessPoolExecutor`
+    pour être exécutée dans un processus séparé. Cela est avantageux pour les
+    très grands nombres où le coût de la communication inter-processus est
+    compensé par le gain de performance du calcul parallèle.
+
+    Args:
+        context: Le contexte de calcul contenant le seuil de décision et
+                 l'exécuteur de processus.
+        a: Le premier entier à multiplier.
+        b: Le deuxième entier à multiplier.
+
+    Returns:
+        Le produit de `a` et `b`.
     """
     # Si le parallélisme n'est pas activé, on utilise la multiplication standard.
     if context.executor is None:

@@ -2,6 +2,14 @@
 
 Ce projet est une migration idiomatique en Python 3.11+ d'une application Go de haute performance pour le calcul des nombres de Fibonacci. L'objectif est de préserver les optimisations et l'architecture de la source Go tout en adoptant les meilleures pratiques et bibliothèques de l'écosystème Python moderne.
 
+## Features
+
+-   **Algorithmes Multiples** : Implémentation de plusieurs algorithmes (itératif, exponentiation matricielle, fast doubling) pour comparaison.
+-   **Haute Performance pour Grands Nombres** : Utilise `asyncio` pour la concurrence et un `ProcessPoolExecutor` pour paralléliser les multiplications de très grands nombres.
+-   **Calibration Automatique** : Inclut un outil pour calibrer et trouver le seuil de performance optimal pour la multiplication parallèle sur une machine donnée.
+-   **Interface en Ligne de Commande (CLI) Complète** : Interface flexible avec des options pour choisir les algorithmes, définir des timeouts, et afficher des barres de progression détaillées.
+-   **Qualité de Code et Tests** : Suite de tests complète avec `pytest`, `Hypothesis` pour les tests basés sur les propriétés, et `pytest-benchmark` pour les mesures de performance.
+
 ## Architecture
 
 Le projet adopte une structure de paquet moderne et une séparation claire des préoccupations :
@@ -48,7 +56,9 @@ python -m pyfibonacci.cli.main -n <nombre> [OPTIONS]
 -   `-n INT`: (Obligatoire) L'indice du nombre de Fibonacci à calculer.
 -   `--algo {iterative,matrix,fast,all}`: L'algorithme à utiliser (par défaut: `fast`).
 -   `--timeout FLOAT`: Timeout en secondes pour un calcul (par défaut: 10.0).
+-   `--threshold INT`: Seuil (en nombre de chiffres) pour passer à la multiplication parallèle (par défaut: 10000).
 -   `-d, --details`: Affiche une barre de progression pour les longs calculs.
+-   `--calibrate`: Lance un benchmark pour trouver le `--threshold` optimal.
 -   `--version`: Affiche la version du programme.
 
 **Exemples :**
@@ -66,6 +76,11 @@ python -m pyfibonacci.cli.main -n <nombre> [OPTIONS]
 -   **Comparer tous les algorithmes pour F(50) :**
     ```bash
     python -m pyfibonacci.cli.main -n 50 --algo all
+    ```
+
+-   **Trouver le seuil de multiplication optimal pour votre machine :**
+    ```bash
+    python -m pyfibonacci.cli.main --calibrate
     ```
 
 ## Suite de Tests
