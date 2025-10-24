@@ -70,7 +70,36 @@ python -m pyfibonacci.cli.main -n <nombre> [OPTIONS]
 
 ## Suite de Tests
 
-Le projet est fourni avec une suite de tests robuste. Pour l'exécuter :
+Le projet est fourni avec une suite de tests robuste utilisant `pytest`.
+
+Pour exécuter la suite de tests, vous devez d'abord définir la variable d'environnement `PYTHONPATH` pour que Python puisse trouver les modules du projet. La syntaxe varie selon votre système d'exploitation.
+
+### Linux / macOS
+
 ```bash
-PYTHONPATH=src pytest
+PYTHONPATH=src python3 -m pytest
+```
+
+### Windows (PowerShell)
+
+```powershell
+$env:PYTHONPATH="src"; python3 -m pytest
+```
+
+### Windows (Command Prompt)
+
+```cmd
+set PYTHONPATH=src && python3 -m pytest
+```
+
+### Exécuter les tests avec le rapport de couverture
+
+Pour générer un rapport de couverture de test, utilisez l'option `--cov` :
+
+```bash
+# Pour Linux / macOS
+PYTHONPATH=src python3 -m pytest --cov=src tests/
+
+# Pour Windows PowerShell
+$env:PYTHONPATH="src"; python3 -m pytest --cov=src tests/
 ```
