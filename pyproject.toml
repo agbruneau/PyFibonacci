@@ -27,6 +27,7 @@ dev = [
     "pytest-benchmark",
     "hypothesis",
     "pytest-asyncio",
+    "pytest-cov",
 ]
 
 [project.scripts]
