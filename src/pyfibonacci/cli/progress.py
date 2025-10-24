@@ -19,11 +19,11 @@ async def progress_bar_manager(
 
     Args:
         queue: La file d'attente `asyncio` depuis laquelle lire les
-               mises à jour de progression. Les messages peuvent être des
-               entiers (pour incrémenter la barre) ou la chaîne "done"
-               pour terminer.
+            mises à jour de progression. Les messages peuvent être des
+            entiers (pour incrémenter la barre) ou la chaîne "done"
+            pour terminer.
         total: La valeur totale de la barre de progression, représentant
-               l'achèvement.
+            l'achèvement.
         description: Le texte à afficher à côté de la barre de progression.
     """
     with tqdm(total=total, desc=description, unit=" steps") as pbar:
