@@ -8,7 +8,15 @@ from concurrent.futures import ProcessPoolExecutor
 from .core.multiplication import _parallel_multiply
 
 async def _measure_standard_multiply(size_in_bits: int) -> float:
-    """Mesure le temps d'une multiplication standard pour une certaine taille."""
+    """Mesure la durée d'une multiplication standard pour des entiers d'une
+    taille donnée.
+
+    Args:
+        size_in_bits: La taille en bits des deux nombres à multiplier.
+
+    Returns:
+        La durée en secondes de l'opération de multiplication.
+    """
     # On génère deux nombres aléatoires de la taille spécifiée.
     a = (1 << size_in_bits) - 1
     b = (1 << size_in_bits) - 1
@@ -19,7 +27,18 @@ async def _measure_standard_multiply(size_in_bits: int) -> float:
     return end_time - start_time
 
 async def _measure_parallel_multiply(executor: ProcessPoolExecutor, size_in_bits: int) -> float:
-    """Mesure le temps d'une multiplication parallèle."""
+    """Mesure la durée d'une multiplication parallélisée pour des entiers
+    d'une taille donnée.
+
+    Args:
+        executor: L'instance de `ProcessPoolExecutor` à utiliser pour
+                  exécuter la multiplication dans un processus séparé.
+        size_in_bits: La taille en bits des deux nombres à multiplier.
+
+    Returns:
+        La durée en secondes de l'opération, incluant le temps de
+        communication entre processus.
+    """
     a = (1 << size_in_bits) - 1
     b = (1 << size_in_bits) - 1
 
@@ -31,8 +50,17 @@ async def _measure_parallel_multiply(executor: ProcessPoolExecutor, size_in_bits
     return end_time - start_time
 
 async def run_calibration(executor: ProcessPoolExecutor):
-    """
-    Exécute une série de benchmarks pour trouver le seuil optimal pour la multiplication parallèle.
+    """Exécute une série de benchmarks pour identifier le seuil optimal pour
+    la parallélisation de la multiplication.
+
+    La fonction mesure et compare les temps d'exécution de la multiplication
+    standard et de la multiplication parallélisée pour différentes tailles
+    de nombres. Elle affiche les résultats dans un tableau et indique le
+    point approximatif où la parallélisation devient plus performante.
+
+    Args:
+        executor: L'instance de `ProcessPoolExecutor` à utiliser pour les
+                  mesures de multiplication parallèle.
     """
     print("Démarrage de la calibration... (cela peut prendre quelques minutes)")
     print("----------------------------------------------------------------------")

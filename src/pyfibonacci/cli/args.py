@@ -5,11 +5,16 @@ Module pour la configuration et l'analyse des arguments de la ligne de commande.
 import argparse
 
 def parse_args() -> argparse.Namespace:
-    """
-    Configure le parser d'arguments et analyse les arguments de la ligne de commande.
+    """Configure l'analyseur d'arguments et traite les options de la ligne
+    de commande.
+
+    Cette fonction définit toutes les options disponibles pour l'interface
+    en ligne de commande, y compris l'indice `n`, le choix de l'algorithme,
+    le timeout, et les options de calibration.
 
     Returns:
-        Un objet Namespace contenant les arguments parsés.
+        Un objet `argparse.Namespace` contenant les arguments parsés sous
+        forme d'attributs.
     """
     parser = argparse.ArgumentParser(
         description="Calculateur de nombres de Fibonacci haute performance en Python.",

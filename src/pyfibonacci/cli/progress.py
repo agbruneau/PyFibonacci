@@ -10,8 +10,21 @@ async def progress_bar_manager(
     total: int,
     description: str
 ) -> None:
-    """
-    Consomme les messages d'une file d'attente pour mettre à jour une barre de progression tqdm.
+    """Gère l'affichage et la mise à jour d'une barre de progression `tqdm`.
+
+    Cette coroutine écoute les messages entrants sur une file `asyncio.Queue`.
+    Elle met à jour la barre de progression en fonction des messages reçus
+    jusqu'à ce qu'un message "done" soit reçu ou que la file soit vide
+    après un timeout.
+
+    Args:
+        queue: La file d'attente `asyncio` depuis laquelle lire les
+               mises à jour de progression. Les messages peuvent être des
+               entiers (pour incrémenter la barre) ou la chaîne "done"
+               pour terminer.
+        total: La valeur totale de la barre de progression, représentant
+               l'achèvement.
+        description: Le texte à afficher à côté de la barre de progression.
     """
     with tqdm(total=total, desc=description, unit=" steps") as pbar:
         while True:
