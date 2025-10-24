@@ -26,6 +26,18 @@ async def test_fib_matrix(context, n, expected):
     result = await fib_matrix(context, n)
     assert result == expected
 
+
+@pytest.mark.asyncio
+async def test_fib_matrix_n_1_edge_case(context):
+    """
+    Teste spécifiquement le cas n=1 pour fib_matrix.
+
+    Avant le correctif, ce cas était géré par un contournement qui masquait un bug
+    de récursion infinie. Ce test s'assure que l'algorithme principal gère
+    correctement ce cas critique.
+    """
+    assert await fib_matrix(context, 1) == 1
+
 @pytest.mark.parametrize("n, expected", enumerate(FIBONACCI_TERMS))
 @pytest.mark.asyncio
 async def test_fib_fast_doubling(context, n, expected):
