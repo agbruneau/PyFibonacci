@@ -72,6 +72,21 @@ async def _run_all_algorithms(context: CalculationContext, n: int, timeout: floa
         for name, func in ALGORITHM_REGISTRY.items():
             tg.create_task(_task_wrapper(name, func))
 
+
+async def _run_single_algorithm_with_progress_shutdown(
+    context: CalculationContext, n: int, algo_name: str, timeout: float
+):
+    """
+    Wrapper pour exécuter un algorithme et s'assurer que le signal 'done'
+    est envoyé à la barre de progression à la fin du calcul.
+    """
+    try:
+        await _run_single_algorithm(context, n, algo_name, timeout)
+    finally:
+        if context.progress_queue:
+            await context.progress_queue.put("done")
+
+
 async def main_async():
     """
     Fonction principale asynchrone qui orchestre l'application.
@@ -104,10 +119,7 @@ async def main_async():
                 total_steps = args.n.bit_length()
                 async with asyncio.TaskGroup() as tg:
                     tg.create_task(progress_bar_manager(progress_queue, total_steps, f"Algo: {args.algo}"))
-                    tg.create_task(_run_single_algorithm(context, args.n, args.algo, args.timeout))
+                    # On utilise le nouveau wrapper ici
+                    tg.create_task(_run_single_algorithm_with_progress_shutdown(context, args.n, args.algo, args.timeout))
             else:
                 await _run_single_algorithm(context, args.n, args.algo, args.timeout)
-
-            # S'assure que le message "done" est envoyé pour terminer la barre de progression.
-            if progress_queue:
-                await progress_queue.put("done")

@@ -103,3 +103,35 @@ async def test_main_async_missing_n_argument(mock_process_pool_executor, mock_pa
     assert e.value.code == 1
     captured = capsys.readouterr()
     assert "ERREUR: L'argument '-n' est obligatoire" in captured.err
+
+
+@pytest.mark.asyncio
+@patch("pyfibonacci.app.parse_args")
+@patch("pyfibonacci.app._run_single_algorithm", new_callable=AsyncMock)
+@patch("pyfibonacci.app.ProcessPoolExecutor")
+async def test_main_async_progress_bar_deadlock(
+    mock_process_pool_executor, mock_run_single_algorithm, mock_parse_args, capsys
+):
+    """
+    Vérifie que le programme ne se bloque pas (deadlock) lorsque la barre
+    de progression est activée. C'est un test de régression pour le bug où
+    le message "done" n'était jamais envoyé à la queue, bloquant le
+    gestionnaire de progression.
+    """
+    mock_args = MagicMock(
+        n=10,
+        algo="fast",
+        details=True,  # Active la barre de progression
+        calibrate=False,
+        timeout=1.0,
+        threshold=1000
+    )
+    mock_parse_args.return_value = mock_args
+
+    try:
+        # On exécute avec un timeout court. Si le deadlock se produit,
+        # ce test échouera par timeout.
+        async with asyncio.timeout(2):
+            await main_async()
+    except TimeoutError:
+        pytest.fail("Deadlock détecté: main_async a dépassé le timeout.")
