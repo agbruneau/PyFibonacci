@@ -67,7 +67,7 @@ Ce projet utilise `pyproject.toml` pour la gestion des dépendances.
 
 ### Python
 
-Grâce au point d'entrée défini dans `pyproject.toml`, vous pouvez utiliser la commande `pyfibonacci`.
+Le projet Python est accessible via la commande `pyfibonacci` grâce à un point d'entrée défini dans `pyproject.toml`.
 
 **Syntaxe de base :**
 ```bash
@@ -76,37 +76,49 @@ pyfibonacci -n <nombre> [OPTIONS]
 
 **Exemples :**
 
--   **Calculer F(1 000 000) avec l'algorithme par défaut (`fast`):**
+-   **Calculer F(1 000 000) avec l'algorithme par défaut (`fast_doubling`) et afficher les détails :**
     ```bash
     pyfibonacci -n 1000000 --details
     ```
 
--   **Comparer tous les algorithmes pour F(50) :**
+-   **Comparer la performance de tous les algorithmes pour F(50) :**
     ```bash
     pyfibonacci -n 50 --algo all
     ```
 
--   **Trouver le seuil de multiplication optimal pour votre machine :**
+-   **Trouver le seuil de multiplication parallèle optimal pour votre machine :**
+    Cette commande exécute une série de benchmarks pour déterminer le nombre de chiffres à partir duquel la multiplication parallèle est plus performante.
     ```bash
     pyfibonacci --calibrate
     ```
 
+-   **Obtenir de l'aide sur les commandes et options disponibles :**
+    ```bash
+    pyfibonacci --help
+    ```
+
 ### Rust
 
-Utilisez la commande `cargo run` ou exécutez le binaire compilé directement.
+L'exécutable Rust peut être lancé via Cargo ou en exécutant le binaire compilé directement.
 
 **Syntaxe :**
-```bash
-# Via Cargo
-cargo run --release -- -n <nombre>
 
-# Binaire direct
-./target/release/fib_rs <nombre>
-```
+-   **Avec Cargo :**
+    La commande `cargo run` compile et exécute le programme. Le double tiret `--` est utilisé pour séparer les arguments de Cargo de ceux de votre programme.
+    ```bash
+    cd fib_rs
+    cargo run --release -- <nombre>
+    ```
+
+-   **Avec le binaire direct :**
+    Après une compilation avec `cargo build --release`, le binaire se trouve dans `target/release/`.
+    ```bash
+    ./fib_rs/target/release/fib_rs <nombre>
+    ```
 
 **Exemple :**
 
--   **Calculer F(1 000 000) :**
+-   **Calculer F(1 000 000) avec Rust :**
     ```bash
     cd fib_rs
     cargo run --release -- 1000000
