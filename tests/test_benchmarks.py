@@ -15,19 +15,20 @@ def test_benchmark_iterative(benchmark):
     """Benchmark pour l'algorithme itératif."""
     benchmark(fib_iterative, BENCHMARK_N)
 
-@pytest.mark.asyncio
-async def test_benchmark_matrix(benchmark):
+def test_benchmark_matrix(benchmark):
     """Benchmark pour l'algorithme matriciel."""
     context = CalculationContext(threshold=10000)
 
-    # On utilise benchmark.pedantic pour les coroutines.
-    # Le troisième argument est la coroutine à appeler.
-    # Les arguments suivants sont passés à la coroutine.
-    await benchmark.pedantic(fib_matrix, args=(context, BENCHMARK_N), iterations=10, rounds=100)
+    def f():
+        return asyncio.run(fib_matrix(context, BENCHMARK_N))
 
-@pytest.mark.asyncio
-async def test_benchmark_fast_doubling(benchmark):
+    benchmark(f)
+
+def test_benchmark_fast_doubling(benchmark):
     """Benchmark pour l'algorithme 'fast doubling'."""
     context = CalculationContext(threshold=10000)
 
-    await benchmark.pedantic(fib_fast_doubling, args=(context, BENCHMARK_N), iterations=10, rounds=100)
+    def f():
+        return asyncio.run(fib_fast_doubling(context, BENCHMARK_N))
+
+    benchmark(f)
