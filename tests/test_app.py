@@ -46,6 +46,27 @@ async def test_run_single_algorithm_timeout(mock_context, capsys):
 
 
 @pytest.mark.asyncio
+async def test_run_single_algorithm_keyboard_interrupt(mock_context, capsys):
+    """
+    Vérifie que KeyboardInterrupt est correctement géré.
+    """
+    with patch("pyfibonacci.app.ALGORITHM_REGISTRY", {"test_sync": MagicMock(side_effect=KeyboardInterrupt)}):
+        with pytest.raises(KeyboardInterrupt):
+            await _run_single_algorithm(mock_context, 10, "test_sync", timeout=1)
+
+
+@pytest.mark.asyncio
+async def test_run_single_algorithm_exception(mock_context, capsys):
+    """
+    Vérifie que les exceptions génériques sont correctement gérées.
+    """
+    with patch("pyfibonacci.app.ALGORITHM_REGISTRY", {"test_sync": MagicMock(side_effect=ValueError("Test Error"))}):
+        await _run_single_algorithm(mock_context, 10, "test_sync", timeout=1)
+        captured = capsys.readouterr()
+        assert "ERREUR inattendu" in captured.err
+
+
+@pytest.mark.asyncio
 async def test_run_all_algorithms(mock_context, capsys):
     """
     Vérifie que _run_all_algorithms exécute tous les algorithmes
