@@ -3,6 +3,7 @@ Module de répartition pour les opérations de multiplication de haute précisio
 """
 
 import asyncio
+import math
 from .context import CalculationContext
 
 def _parallel_multiply(a: int, b: int) -> int:
@@ -47,9 +48,9 @@ async def multiply(context: CalculationContext, a: int, b: int) -> int:
 
     # On détermine si la taille des nombres justifie le coût du parallélisme.
     # n.bit_length() est une manière efficace d'estimer la magnitude d'un nombre.
-    # Le seuil est en nombre de chiffres, on fait une conversion approximative (1 chiffre ~ 3.32 bits).
-    # log10(2) ~ 0.30103 => 1/log10(2) ~ 3.3219
-    if max(a.bit_length(), b.bit_length()) > (context.threshold * 3.3219):
+    # Le seuil est en nombre de chiffres, on fait une conversion (1 chiffre ~ 3.32 bits).
+    # La conversion exacte est log2(10).
+    if max(a.bit_length(), b.bit_length()) > (context.threshold * math.log2(10)):
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             context.executor,
