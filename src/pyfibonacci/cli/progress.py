@@ -1,48 +1,54 @@
 """
 Module pour la gestion de la barre de progression de l'interface CLI.
+
+Ce module fournit un gestionnaire asynchrone pour afficher et mettre à jour
+une barre de progression `tqdm` en fonction des messages reçus via une
+`asyncio.Queue`.
 """
+
 import asyncio
-from typing import AsyncGenerator
 from tqdm.asyncio import tqdm
 
-async def progress_bar_manager(
-    queue: asyncio.Queue,
-    total: int,
-    description: str
-) -> None:
-    """Gère l'affichage et la mise à jour d'une barre de progression `tqdm`.
 
-    Cette coroutine écoute les messages entrants sur une file `asyncio.Queue`.
-    Elle met à jour la barre de progression en fonction des messages reçus
-    jusqu'à ce qu'un message "done" soit reçu ou que la file soit vide
-    après un timeout.
+async def progress_bar_manager(
+    queue: asyncio.Queue, total: int, description: str
+) -> None:
+    """Gère l'affichage et la mise à jour asynchrones d'une barre de progression.
+
+    Cette coroutine s'exécute en parallèle du calcul principal. Elle écoute les
+    messages sur une `asyncio.Queue` pour mettre à jour la barre de progression
+    `tqdm`. La communication est unidirectionnelle : le gestionnaire reçoit des
+    commandes de l'algorithme qui effectue le calcul.
 
     Args:
-        queue: La file d'attente `asyncio` depuis laquelle lire les
-            mises à jour de progression. Les messages peuvent être des
-            entiers (pour incrémenter la barre) ou la chaîne "done"
-            pour terminer.
-        total: La valeur totale de la barre de progression, représentant
-            l'achèvement.
-        description: Le texte à afficher à côté de la barre de progression.
+        queue (asyncio.Queue): La file d'attente pour recevoir les messages.
+            Les messages attendus sont soit des entiers, indiquant le nombre
+            de pas à avancer, soit la chaîne "done" pour signaler la fin.
+        total (int): La valeur maximale de la barre de progression, correspondant
+            à l'achèvement complet de la tâche.
+        description (str): Un texte descriptif affiché à côté de la barre de
+            progression.
     """
     with tqdm(total=total, desc=description, unit=" steps") as pbar:
         while True:
             try:
-                # On attend un message de progression avec un petit timeout
-                # pour ne pas bloquer indéfiniment si le producteur se termine.
+                # Attend un message avec un timeout pour éviter un blocage infini.
                 message = await asyncio.wait_for(queue.get(), timeout=1.0)
 
                 if message == "done":
-                    pbar.n = pbar.total # S'assure que la barre va à 100%
+                    pbar.n = pbar.total  # Assure que la barre atteint 100%
                     pbar.refresh()
                     break
 
-                pbar.update(message)
+                if isinstance(message, int):
+                    pbar.update(message)
+
                 queue.task_done()
             except asyncio.TimeoutError:
-                # Si le producteur s'arrête sans envoyer "done", on sort.
+                # Si la file est vide après le timeout, on suppose que la tâche
+                # productrice s'est terminée sans envoyer "done".
                 if queue.empty():
                     break
             except Exception:
+                # En cas d'autre erreur, on interrompt la barre de progression.
                 break

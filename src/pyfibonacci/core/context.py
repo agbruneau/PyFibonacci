@@ -1,30 +1,34 @@
 """
 Module définissant le contexte d'exécution pour les calculs de Fibonacci.
 """
+
 import asyncio
 from dataclasses import dataclass
 from concurrent.futures import ProcessPoolExecutor
 from typing import Optional
 
+
 @dataclass
 class CalculationContext:
-    """Encapsule les paramètres et ressources partagés pour une session de calcul.
+    """Encapsule les paramètres et ressources partagés pour un calcul.
 
     Cette `dataclass` sert de conteneur pour passer de manière cohérente
-    les configurations et les objets partagés (comme l'exécuteur de processus
-    et la file de progression) à travers les différentes couches de
-    l'application, en particulier aux fonctions de calcul qui en ont besoin.
+    les configurations (comme le seuil de parallélisation) et les objets
+    partagés (le pool de processus, la file de progression) à travers les
+    différentes couches de l'application.
 
     Attributes:
-        threshold: Le seuil (en nombre de chiffres décimaux) à partir duquel
-                   la multiplication doit être parallélisée.
-        executor: Une instance de `ProcessPoolExecutor` pour exécuter les
-                  calculs de multiplication en parallèle. Si `None`, toute
-                  la multiplication est exécutée dans le processus principal.
-        progress_queue: Une `asyncio.Queue` optionnelle utilisée pour envoyer
-                        des mises à jour de progression depuis les algorithmes
-                        vers l'interface utilisateur.
+        threshold (int): Le seuil, en nombre de chiffres décimaux, au-delà
+            duquel la multiplication des grands nombres est déléguée au
+            `ProcessPoolExecutor`.
+        executor (Optional[ProcessPoolExecutor]): L'instance du pool de
+            processus utilisée pour les calculs CPU-bound. Si `None`, toutes
+            les opérations sont effectuées dans le thread principal.
+        progress_queue (Optional[asyncio.Queue]): Une file asynchrone pour
+            communiquer l'avancement du calcul à l'interface utilisateur,
+            notamment pour la barre de progression.
     """
+
     threshold: int
     executor: Optional[ProcessPoolExecutor] = None
     progress_queue: Optional[asyncio.Queue] = None

@@ -6,11 +6,16 @@
 //! Ce code est structuré comme un 'crate' Rust standard et peut être compilé
 //! et exécuté avec Cargo.
 
+use fib_rs::fibonacci_fast_doubling_iterative;
 use std::env;
 use std::time::Instant;
-use fib_rs::fibonacci_fast_doubling_iterative;
 
-/// Point d'entrée principal de l'application.
+/// Point d'entrée principal de l'application en ligne de commande.
+///
+/// Ce programme analyse l'argument `n` fourni par l'utilisateur,
+/// calcule le n-ième nombre de Fibonacci en utilisant la fonction de la
+/// bibliothèque, mesure le temps d'exécution, et affiche le résultat
+/// de manière concise.
 fn main() {
     // Récupère les arguments de la ligne de commande
     let args: Vec<String> = env::args().collect();
@@ -26,12 +31,18 @@ fn main() {
     let n: u128 = match args[1].parse() {
         Ok(num) => num,
         Err(_) => {
-            eprintln!("Erreur : L'argument '{}' n'est pas un nombre u128 valide.", args[1]);
+            eprintln!(
+                "Erreur : L'argument '{}' n'est pas un nombre u128 valide.",
+                args[1]
+            );
             std::process::exit(1);
         }
     };
 
-    println!("Calcul de Fibonacci F({}) avec l'algorithme Fast Doubling (Itératif, Optimisé)...", n);
+    println!(
+        "Calcul de Fibonacci F({}) avec l'algorithme Fast Doubling (Itératif, Optimisé)...",
+        n
+    );
 
     // Mesure du temps d'exécution
     let start = Instant::now();
@@ -45,6 +56,8 @@ fn main() {
     let len = result_str.len();
     println!("Nombre total de chiffres décimaux: {}", len);
 
+    // Pour ne pas surcharger le terminal, on n'affiche que les 100
+    // premiers et 100 derniers chiffres pour les très grands nombres.
     if len <= 200 {
         println!("Résultat: {}", result_str);
     } else {
