@@ -1,10 +1,15 @@
 """
 Module principal d'orchestration de l'application PyFibonacci.
+
+Ce module contient la logique de haut niveau pour l'application en ligne de
+commande PyFibonacci. Il gère l'analyse des arguments, l'initialisation des
+composants (comme le pool de processus), et l'orchestration de l'exécution
+des algorithmes de calcul de la suite de Fibonacci.
 """
 
 import asyncio
 import sys
-from typing import Callable, Dict, Coroutine, Any, Awaitable
+from typing import Callable, Coroutine, Any, Awaitable, Dict
 from concurrent.futures import ProcessPoolExecutor
 
 from .cli.args import parse_args
@@ -21,42 +26,47 @@ ALGORITHM_REGISTRY: Dict[str, Callable[..., Awaitable[int] | int]] = {
     "fast": fib_fast_doubling,
 }
 
+
 async def _run_cpu_bound_task(func: Callable[..., Any], *args: Any) -> Any:
-    """Exécute une fonction bloquante (CPU-bound) dans un `ThreadPoolExecutor`
-    pour éviter de bloquer la boucle d'événements `asyncio`.
+    """Exécute une fonction bloquante (CPU-bound) dans un `ProcessPoolExecutor`.
+
+    Cette fonction est essentielle pour ne pas bloquer la boucle d'événements
+    `asyncio` lorsqu'une tâche intensive en calcul (comme `fib_iterative`)
+    doit être exécutée.
 
     Args:
-        func: La fonction synchrone et potentiellement bloquante à exécuter.
-        *args: Les arguments à passer à `func`.
+        func (Callable[..., Any]): La fonction synchrone et bloquante à exécuter.
+        *args (Any): Les arguments positionnels à passer à `func`.
 
     Returns:
-        Le résultat de l'appel de `func(*args)`.
+        Any: Le résultat retourné par `func`.
     """
     loop = asyncio.get_running_loop()
     # Le 'None' en premier argument utilise le ThreadPoolExecutor par défaut.
     return await loop.run_in_executor(None, func, *args)
 
-async def _run_single_algorithm(context: CalculationContext, n: int, algo_name: str, timeout: float):
-    """Exécute un algorithme de Fibonacci spécifié et affiche le résultat.
 
-    La fonction gère l'appel (synchrone ou asynchrone) de l'algorithme,
-    applique un timeout à l'exécution et gère les erreurs potentielles
-    (TimeoutError, exceptions générales).
+async def _run_single_algorithm(
+    context: CalculationContext, n: int, algo_name: str, timeout: float
+) -> None:
+    """Exécute un algorithme de Fibonacci et gère son cycle de vie.
+
+    Cette fonction prend en charge l'exécution d'un algorithme, qu'il soit
+    synchrone ou asynchrone, en appliquant un timeout et en gérant les
+    exceptions potentielles. Le résultat est affiché sur la sortie standard.
 
     Args:
-        context: Le contexte de calcul à passer aux algorithmes asynchrones.
-        n: L'indice de la suite de Fibonacci à calculer.
-        algo_name: Le nom de l'algorithme à utiliser (doit être une clé
-                   dans `ALGORITHM_REGISTRY`).
-        timeout: Le temps maximum en secondes alloué pour l'exécution.
+        context (CalculationContext): Le contexte de calcul contenant le pool
+            de processus et la queue pour la barre de progression.
+        n (int): L'indice de la suite de Fibonacci à calculer.
+        algo_name (str): Le nom de l'algorithme à utiliser (clé de `ALGORITHM_REGISTRY`).
+        timeout (float): Le temps maximum en secondes alloué pour l'exécution.
     """
     algo_func = ALGORITHM_REGISTRY[algo_name]
     print(f"Calcul de F({n}) en utilisant l'algorithme '{algo_name}'...")
 
     try:
         async with asyncio.timeout(timeout):
-            # Les algorithmes asynchrones (matrix, fast) sont appelés directement.
-            # L'algorithme synchrone (iterative) est enveloppé.
             if asyncio.iscoroutinefunction(algo_func):
                 result = await algo_func(context, n)
             else:
@@ -64,25 +74,34 @@ async def _run_single_algorithm(context: CalculationContext, n: int, algo_name: 
 
             print(f"Résultat ({algo_name}): {result}")
     except TimeoutError:
-        print(f"ERREUR: L'algorithme '{algo_name}' a dépassé le timeout de {timeout}s.", file=sys.stderr)
+        print(
+            f"ERREUR: L'algorithme '{algo_name}' a dépassé le timeout de {timeout}s.",
+            file=sys.stderr,
+        )
     except Exception as e:
-        print(f"ERREUR inattendue avec l'algorithme '{algo_name}': {e}", file=sys.stderr)
+        print(
+            f"ERREUR inattendue avec l'algorithme '{algo_name}': {e}", file=sys.stderr
+        )
 
-async def _run_all_algorithms(context: CalculationContext, n: int, timeout: float):
+
+async def _run_all_algorithms(
+    context: CalculationContext, n: int, timeout: float
+) -> None:
     """Exécute tous les algorithmes de Fibonacci enregistrés en parallèle.
 
     Utilise un `asyncio.TaskGroup` pour lancer et gérer l'exécution
-    concurrente de tous les algorithmes listés dans `ALGORITHM_REGISTRY`.
+    concurrente de tous les algorithmes. Chaque algorithme est encapsulé dans
+    une tâche distincte avec son propre timeout.
 
     Args:
-        context: Le contexte de calcul à passer aux algorithmes.
-        n: L'indice de la suite de Fibonacci à calculer.
-        timeout: Le temps maximum en secondes alloué pour chaque algorithme.
+        context (CalculationContext): Le contexte de calcul.
+        n (int): L'indice de la suite de Fibonacci à calculer.
+        timeout (float): Le timeout applicable à chaque algorithme individuellement.
     """
     print(f"Calcul de F({n}) en utilisant tous les algorithmes en parallèle...")
 
     async def _task_wrapper(name: str, func: Callable) -> None:
-        """Enveloppe l'exécution d'un algo pour gérer le timeout et le type d'appel."""
+        """Encapsule un algorithme pour gestion d'erreurs et de timeout."""
         try:
             async with asyncio.timeout(timeout):
                 if asyncio.iscoroutinefunction(func):
@@ -102,19 +121,19 @@ async def _run_all_algorithms(context: CalculationContext, n: int, timeout: floa
 
 async def _run_single_algorithm_with_progress_shutdown(
     context: CalculationContext, n: int, algo_name: str, timeout: float
-):
-    """Exécute un algorithme et garantit la notification de fin à la barre
-    de progression.
+) -> None:
+    """Exécute un algorithme et garantit la terminaison de la barre de progression.
 
-    Cet enrobeur (wrapper) s'assure que le message "done" est envoyé à la
-    `progress_queue` même si l'algorithme échoue ou est annulé,
-    permettant ainsi à la barre de progression de se terminer proprement.
+    Cet enrobeur s'assure que le message de fin (`"done"`) est envoyé à la
+    `progress_queue`, même en cas d'erreur ou d'annulation de l'algorithme.
+    Ceci est crucial pour que la tâche de la barre de progression ne reste
+    pas en attente indéfiniment.
 
     Args:
-        context: Le contexte de calcul.
-        n: L'indice de la suite de Fibonacci.
-        algo_name: Le nom de l'algorithme à exécuter.
-        timeout: Le timeout pour l'exécution de l'algorithme.
+        context (CalculationContext): Le contexte de calcul.
+        n (int): L'indice de la suite de Fibonacci à calculer.
+        algo_name (str): Le nom de l'algorithme à exécuter.
+        timeout (float): Le timeout pour l'exécution.
     """
     try:
         await _run_single_algorithm(context, n, algo_name, timeout)
@@ -123,16 +142,16 @@ async def _run_single_algorithm_with_progress_shutdown(
             await context.progress_queue.put("done")
 
 
-async def main_async():
-    """Orchestre l'exécution de l'application en mode asynchrone.
+async def main_async() -> None:
+    """Point d'entrée principal et orchestrateur de l'application asynchrone.
 
-    Cette fonction principale est responsable de :
-    1.  Analyser les arguments de la ligne de commande.
-    2.  Initialiser le `ProcessPoolExecutor` pour les calculs parallèles.
-    3.  Lancer le mode calibration si demandé.
-    4.  Créer le `CalculationContext` avec les paramètres appropriés.
-    5.  Gérer l'exécution du ou des algorithmes de Fibonacci sélectionnés.
-    6.  Mettre en place et coordonner la barre de progression si nécessaire.
+    Cette fonction orchestre le flux de l'application :
+    1.  Analyse les arguments de la ligne de commande.
+    2.  Initialise le `ProcessPoolExecutor` pour les calculs CPU-bound.
+    3.  Exécute le mode de calibration si l'option `--calibrate` est passée.
+    4.  Crée le `CalculationContext` partagé.
+    5.  Lance le ou les algorithmes de Fibonacci.
+    6.  Gère la barre de progression si l'option `--details` est activée.
     """
     args = parse_args()
 
@@ -143,7 +162,10 @@ async def main_async():
             return
 
         if args.n is None:
-            print("ERREUR: L'argument '-n' est obligatoire sauf si --calibrate est utilisé.", file=sys.stderr)
+            print(
+                "ERREUR: L'argument '-n' est obligatoire sauf si --calibrate est utilisé.",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         progress_queue = asyncio.Queue() if args.details else None
@@ -151,7 +173,7 @@ async def main_async():
         context = CalculationContext(
             threshold=args.threshold,
             executor=executor,
-            progress_queue=progress_queue
+            progress_queue=progress_queue,
         )
 
         if args.algo == "all":
@@ -161,8 +183,16 @@ async def main_async():
             if progress_queue and args.algo in ["fast", "matrix"]:
                 total_steps = args.n.bit_length()
                 async with asyncio.TaskGroup() as tg:
-                    tg.create_task(progress_bar_manager(progress_queue, total_steps, f"Algo: {args.algo}"))
+                    tg.create_task(
+                        progress_bar_manager(
+                            progress_queue, total_steps, f"Algo: {args.algo}"
+                        )
+                    )
                     # On utilise le nouveau wrapper ici
-                    tg.create_task(_run_single_algorithm_with_progress_shutdown(context, args.n, args.algo, args.timeout))
+                    tg.create_task(
+                        _run_single_algorithm_with_progress_shutdown(
+                            context, args.n, args.algo, args.timeout
+                        )
+                    )
             else:
                 await _run_single_algorithm(context, args.n, args.algo, args.timeout)

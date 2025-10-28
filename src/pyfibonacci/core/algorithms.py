@@ -1,6 +1,11 @@
 """
-Module contenant les implémentations des algorithmes de calcul de la suite de Fibonacci.
+Module contenant les implémentations des algorithmes de calcul de Fibonacci.
+
+Ce module fournit plusieurs algorithmes pour calculer le n-ième nombre de
+la suite de Fibonacci, chacun avec des caractéristiques de performance
+différentes.
 """
+
 import asyncio
 from typing import Tuple
 
@@ -9,21 +14,21 @@ from .multiplication import multiply
 
 
 def fib_iterative(n: int) -> int:
-    """Calcule le n-ième nombre de Fibonacci en utilisant une approche itérative.
+    """Calcule F(n) par une approche itérative simple.
 
-    Cette méthode est une implémentation simple et directe qui construit la
-    suite de Fibonacci jusqu'à l'indice `n`. Elle est efficace en mémoire
-    (O(1)) mais moins performante en temps (O(n)) que les algorithmes
-    logarithmiques pour de grandes valeurs de `n`.
+    Cette méthode est directe, utilisant une boucle pour construire la suite
+    jusqu'à l'indice `n`. Elle est très efficace en mémoire (O(1)), mais sa
+    complexité temporelle est linéaire (O(n)), ce qui la rend moins adaptée
+    pour de très grandes valeurs de `n` par rapport aux méthodes logarithmiques.
 
     Args:
-        n: L'indice (entier non-négatif) dans la suite de Fibonacci.
+        n (int): L'indice (entier non-négatif) dans la suite de Fibonacci.
 
     Returns:
-        Le n-ième nombre de Fibonacci.
+        int: Le n-ième nombre de Fibonacci.
 
     Raises:
-        ValueError: Si `n` est négatif.
+        ValueError: Si `n` est un entier négatif.
     """
     if n < 0:
         raise ValueError("L'indice de Fibonacci ne peut pas être négatif.")
@@ -34,88 +39,90 @@ def fib_iterative(n: int) -> int:
         a, b = b, a + b
     return b
 
-async def fib_matrix(context: CalculationContext, n: int) -> int:
-    """Calcule le n-ième nombre de Fibonacci via l'exponentiation matricielle.
 
-    Cette méthode tire parti de la propriété selon laquelle la n-ième puissance
-    de la matrice [[1, 1], [1, 0]] contient les nombres de Fibonacci.
-    Elle a une complexité temporelle de O(log n) grâce à l'utilisation de
-    l'exponentiation par carré.
+async def fib_matrix(context: CalculationContext, n: int) -> int:
+    """Calcule F(n) via l'exponentiation matricielle.
+
+    Cette méthode repose sur la propriété que F(n) peut être obtenu en élevant
+    la matrice [[1, 1], [1, 0]] à la puissance n-1. L'utilisation de
+    l'exponentiation par carré confère à cet algorithme une complexité
+    temporelle de O(log n).
 
     Args:
-        context: Le contexte de calcul, utilisé pour la multiplication
-                 parallélisée des grands nombres.
-        n: L'indice (entier non-négatif) dans la suite de Fibonacci.
+        context (CalculationContext): Le contexte de calcul pour la
+            multiplication parallélisée des grands nombres.
+        n (int): L'indice (entier non-négatif) de la suite.
 
     Returns:
-        Le n-ième nombre de Fibonacci.
+        int: Le n-ième nombre de Fibonacci.
 
     Raises:
-        ValueError: Si `n` est négatif.
+        ValueError: Si `n` est un entier négatif.
     """
     if n < 0:
         raise ValueError("L'indice de Fibonacci ne peut pas être négatif.")
     if n == 0:
         return 0
 
-    async def multiply_matrices(A: Tuple[int, int, int, int], B: Tuple[int, int, int, int]) -> Tuple[int, int, int, int]:
-        """Multiplie deux matrices 2x2 représentées par des tuples."""
+    Matrix = Tuple[int, int, int, int]
+
+    async def multiply_matrices(A: Matrix, B: Matrix) -> Matrix:
+        """Multiplie deux matrices 2x2."""
         a, b, c, d = A
         e, f, g, h = B
 
-        # Exécute toutes les multiplications en parallèle
         ae, bg, af, bh, ce, dg, cf, dh = await asyncio.gather(
-            multiply(context, a, e), multiply(context, b, g),
-            multiply(context, a, f), multiply(context, b, h),
-            multiply(context, c, e), multiply(context, d, g),
-            multiply(context, c, f), multiply(context, d, h),
+            multiply(context, a, e),
+            multiply(context, b, g),
+            multiply(context, a, f),
+            multiply(context, b, h),
+            multiply(context, c, e),
+            multiply(context, d, g),
+            multiply(context, c, f),
+            multiply(context, d, h),
         )
-        # Calcule les nouvelles cellules de la matrice résultante
         return (ae + bg, af + bh, ce + dg, cf + dh)
 
-    async def matrix_power(A: Tuple[int, int, int, int], m: int) -> Tuple[int, int, int, int]:
+    async def matrix_power(A: Matrix, m: int) -> Matrix:
         """Élève une matrice à la puissance m par exponentiation par carré."""
         if m == 0:
             return (1, 0, 0, 1)  # Matrice identité
         if m == 1:
             return A
 
-        # Si m est pair, A^m = (A^(m/2))^2
         if m % 2 == 0:
             half = await matrix_power(A, m // 2)
             return await multiply_matrices(half, half)
-        # Si m est impair, A^m = A * (A^((m-1)/2))^2
         else:
             half = await matrix_power(A, (m - 1) // 2)
             temp = await multiply_matrices(half, half)
             return await multiply_matrices(A, temp)
 
-    # La matrice de base pour Fibonacci
-    F = (1, 1, 1, 0)
-
-    # On calcule F^(n-1) car F^k donne F(k+1)
+    F: Matrix = (1, 1, 1, 0)
     result_matrix = await matrix_power(F, n - 1)
     return result_matrix[0]
 
-async def fib_fast_doubling(context: CalculationContext, n: int) -> int:
-    """Calcule le n-ième nombre de Fibonacci via l'algorithme "Fast Doubling".
 
-    Cet algorithme est l'un des plus efficaces, avec une complexité temporelle
-    de O(log n). Il repose sur les identités suivantes pour calculer F(2k) et
-    F(2k+1) à partir de F(k) and F(k+1) :
+async def fib_fast_doubling(context: CalculationContext, n: int) -> int:
+    """Calcule F(n) via l'algorithme "Fast Doubling".
+
+    Cet algorithme est l'un des plus performants connus, avec une complexité
+    temporelle en O(log n). Il utilise des identités mathématiques pour
+    calculer F(2k) et F(2k+1) à partir de F(k) et F(k+1).
+
+    Les identités sont :
     F(2k) = F(k) * [2*F(k+1) - F(k)]
     F(2k+1) = F(k+1)^2 + F(k)^2
 
     Args:
-        context: Le contexte de calcul, utilisé pour la multiplication
-                 parallélisée.
-        n: L'indice (entier non-négatif) dans la suite de Fibonacci.
+        context (CalculationContext): Le contexte de calcul.
+        n (int): L'indice (entier non-négatif) de la suite.
 
     Returns:
-        Le n-ième nombre de Fibonacci.
+        int: Le n-ième nombre de Fibonacci.
 
     Raises:
-        ValueError: Si `n` est négatif.
+        ValueError: Si `n` est un entier négatif.
     """
     if n < 0:
         raise ValueError("L'indice de Fibonacci ne peut pas être négatif.")
@@ -123,18 +130,8 @@ async def fib_fast_doubling(context: CalculationContext, n: int) -> int:
         return 0
 
     async def _fib_fast_doubling(m: int) -> Tuple[int, int]:
-        """Fonction récursive principale pour l'algorithme "Fast Doubling".
-
-        Calcule et retourne la paire (F(m), F(m+1)).
-
-        Args:
-            m: L'indice pour lequel calculer la paire de Fibonacci.
-
-        Returns:
-            Un tuple contenant F(m) et F(m+1).
-        """
+        """Fonction récursive qui calcule et retourne (F(m), F(m+1))."""
         if context.progress_queue:
-            # Notifie la barre de progression d'une étape de récursion
             context.progress_queue.put_nowait(1)
 
         if m == 0:
@@ -142,11 +139,8 @@ async def fib_fast_doubling(context: CalculationContext, n: int) -> int:
 
         fk, fk1 = await _fib_fast_doubling(m // 2)
 
-        # F(2k) = F(k) * [2*F(k+1) - F(k)]
-        # F(2k+1) = F(k+1)^2 + F(k)^2
         fk_squared, fk1_squared = await asyncio.gather(
-            multiply(context, fk, fk),
-            multiply(context, fk1, fk1)
+            multiply(context, fk, fk), multiply(context, fk1, fk1)
         )
 
         term = 2 * fk1 - fk
@@ -158,5 +152,5 @@ async def fib_fast_doubling(context: CalculationContext, n: int) -> int:
         else:
             return (f2k1, f2k + f2k1)
 
-    result = await _fib_fast_doubling(n)
-    return result[0]
+    result, _ = await _fib_fast_doubling(n)
+    return result
