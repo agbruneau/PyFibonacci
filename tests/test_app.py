@@ -156,3 +156,18 @@ async def test_main_async_progress_bar_deadlock(
             await main_async()
     except TimeoutError:
         pytest.fail("Deadlock détecté: main_async a dépassé le timeout.")
+
+
+@pytest.mark.asyncio
+async def test_run_single_algorithm_actual_timeout(mock_context, capsys):
+    """
+    Vérifie qu'un vrai timeout est correctement déclenché et géré.
+    """
+    async def long_running_algo(*args, **kwargs):
+        """Simule un algorithme qui prend trop de temps."""
+        await asyncio.sleep(0.1)
+
+    with patch("pyfibonacci.app.ALGORITHM_REGISTRY", {"long_running": long_running_algo}):
+        await _run_single_algorithm(mock_context, 10, "long_running", timeout=0.01)
+        captured = capsys.readouterr()
+        assert "ERREUR: L'algorithme 'long_running' a dépassé le timeout de 0.01s." in captured.err
